@@ -120,15 +120,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
       await signInWithPopup(auth, provider);
     } catch (error: any) {
       console.error('Login failed:', error);
-      if (error?.code === 'auth/popup-closed-by-user') {
-        alert('Login popup was closed. Please try again.');
+      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+        alert('Please allow the popup and try again, or check your browser popup blocker.');
       } else if (error?.code === 'auth/unauthorized-domain') {
-        alert('Domain not authorized. Logging in instead...');
-        // Fallback to redirect
+        alert('Domain not authorized. Trying redirect...');
         await auth.signInWithRedirect(provider);
       } else {
         alert('Login error: ' + error?.message);
