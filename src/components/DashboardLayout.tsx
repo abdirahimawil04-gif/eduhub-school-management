@@ -17,7 +17,8 @@ import {
   Shield,
   ClipboardList,
   Search,
-  ChevronRight
+  ChevronRight,
+  Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../lib/AuthContext';
@@ -31,10 +32,12 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { useFirestoreCollection } from '../lib/useFirestore';
 
 export default function DashboardLayout({ children, activeTab, setActiveTab }: { children: React.ReactNode, activeTab: string, setActiveTab: (tab: string) => void }) {
-  const { profile, school, logout } = useAuth();
+  const { profile, school, logout, refreshProfile } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { data: schools } = useFirestoreCollection<any>('schools', [], false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'Main Menu' },
@@ -168,6 +171,35 @@ export default function DashboardLayout({ children, activeTab, setActiveTab }: {
           </div>
 
           <div className="flex items-center gap-6">
+            {/* School Selector for Super Admin */}
+            {profile?.role === 'super_admin' && schools.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Building2 size={16} />
+                    {school?.name || 'Select School'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Switch School</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {schools.map((s: any) => (
+                    <DropdownMenuItem 
+                      key={s.id}
+                      onClick={() => {
+                        // In a real app, you'd update the user's schoolId
+                        window.location.reload();
+                      }}
+                      className={school?.id === s.id ? 'bg-indigo-50 text-indigo-700' : ''}
+                    >
+                      <Building2 size={14} className="mr-2" />
+                      {s.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
             <div className="hidden md:flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-xl border border-transparent focus-within:border-indigo-200 focus-within:bg-white transition-all w-64">
               <Search size={18} className="text-slate-400" />
               <input 
