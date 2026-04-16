@@ -65,12 +65,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Create default profile for new users
         const currentUser = auth.currentUser;
         if (currentUser) {
-          const isDefaultAdmin = currentUser.email === 'rammadan1213@gmail.com';
+          const isSuperAdmin = currentUser.email === 'abdirahimawil04@gmail.com' || currentUser.email === 'rammadan1213@gmail.com';
           const newProfile: UserProfile = {
             uid: currentUser.uid,
             email: currentUser.email || '',
             displayName: currentUser.displayName || 'User',
-            role: isDefaultAdmin ? 'super_admin' : 'student',
+            role: isSuperAdmin ? 'super_admin' : 'student',
             schoolId: 'default_school'
           };
           await setDoc(profileRef, newProfile);
@@ -122,8 +122,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      if (error?.code === 'auth/popup-closed-by-user') {
+        alert('Login popup was closed. Please try again.');
+      } else if (error?.code === 'auth/unauthorized-domain') {
+        alert('Domain not authorized. Logging in instead...');
+        // Fallback to redirect
+        await auth.signInWithRedirect(provider);
+      } else {
+        alert('Login error: ' + error?.message);
+      }
     }
   };
 
