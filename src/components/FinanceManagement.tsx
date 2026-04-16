@@ -106,7 +106,7 @@ export default function FinanceManagement() {
         dueDate: newFee.dueDate,
         schoolId: profile?.schoolId || 'default_school',
         createdAt: serverTimestamp(),
-      };
+      });
       toast.success("Invoice created successfully");
       setIsAddDialogOpen(false);
       setNewFee({ studentId: '', amount: '', type: 'tuition', dueDate: '' });
@@ -117,7 +117,7 @@ export default function FinanceManagement() {
 
   const handleMarkAsPaid = async (feeId: string) => {
     try {
-      await updateDoc(doc(db, 'fees', feeId), { status: 'paid' };
+      await updateDoc(doc(db, 'fees', feeId), { status: 'paid' });
       toast.success("Payment recorded");
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, 'fees');

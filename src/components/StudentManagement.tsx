@@ -88,7 +88,7 @@ export default function StudentManagement() {
 
     try {
       const { id, ...data } = editingStudent;
-      await updateDoc(doc(db, 'students', id), data;
+      await updateDoc(doc(db, 'students', id), data);
       toast.success("Student updated successfully");
       setEditingStudent(null);
     } catch (error) {

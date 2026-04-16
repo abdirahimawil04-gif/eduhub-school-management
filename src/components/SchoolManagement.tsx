@@ -60,7 +60,7 @@ export default function SchoolManagement() {
       await addDoc(collection(db, 'schools'), {
         ...newSchool,
         createdAt: serverTimestamp(),
-      };
+      });
       toast.success("School branch added successfully");
       setIsAddDialogOpen(false);
       setNewSchool({ name: '', address: '', contactEmail: '' });
@@ -75,7 +75,7 @@ export default function SchoolManagement() {
 
     try {
       const { id, createdAt, ...data } = editingSchool;
-      await updateDoc(doc(db, 'schools', id), data;
+      await updateDoc(doc(db, 'schools', id), data);
       toast.success("School updated successfully");
       setEditingSchool(null);
     } catch (error) {
