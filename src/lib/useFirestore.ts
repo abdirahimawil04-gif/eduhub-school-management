@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, onSnapshot, DocumentData, QueryConstraint } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
+import { db } from './firebase';
 import { useAuth } from './AuthContext';
 
 export function useFirestoreCollection<T = DocumentData>(
@@ -10,7 +10,7 @@ export function useFirestoreCollection<T = DocumentData>(
 ) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { user, profile } = useAuth();
 
   const constraints = useMemo(() => {
@@ -29,6 +29,8 @@ export function useFirestoreCollection<T = DocumentData>(
     }
 
     setLoading(true);
+    setError(null);
+    
     const q = query(collection(db, collectionName), ...constraints);
 
     const unsubscribe = onSnapshot(
@@ -42,14 +44,19 @@ export function useFirestoreCollection<T = DocumentData>(
         setLoading(false);
       },
       (err) => {
-        setError(err);
+        console.error(`Error loading ${collectionName}:`, err);
+        const errorMsg = err.message || 'Unknown error';
+        if (errorMsg.includes('permission') || errorMsg.includes('Permission')) {
+          setError('You do not have permission to access this data.');
+        } else {
+          setError(errorMsg);
+        }
         setLoading(false);
-        handleFirestoreError(err, OperationType.LIST, collectionName);
       }
     );
 
     return () => unsubscribe();
-  }, [collectionName, user, constraints]);
+  }, [collectionName, user, JSON.stringify(constraints)]);
 
   return { data, loading, error };
 }
