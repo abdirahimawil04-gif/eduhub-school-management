@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user with role-based access",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["super_admin", "school_admin", "teacher", "accountant", "student"] },
+        "schoolId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "School": {
+      "title": "School",
+      "description": "School branch information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Student profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "classId": { "type": "string" },
+        "admissionNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "parentName": { "type": "string" },
+        "parentContact": { "type": "string" }
+      },
+      "required": ["userId", "schoolId", "classId"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Teacher profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "specialization": { "type": "string" }
+      },
+      "required": ["userId", "schoolId"]
+    },
+    "Class": {
+      "title": "Class",
+      "description": "Academic class/grade",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "teacherId": { "type": "string" }
+      },
+      "required": ["name", "schoolId"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "classId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["present", "absent", "late"] },
+        "recordedBy": { "type": "string" }
+      },
+      "required": ["studentId", "date", "status"]
+    },
+    "Fee": {
+      "title": "Fee",
+      "description": "Student fee record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["paid", "pending", "overdue"] },
+        "dueDate": { "type": "string", "format": "date" }
+      },
+      "required": ["studentId", "amount", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System broadcast notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "warning", "success"] },
+        "targetRole": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "message", "type", "targetRole"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/schools/{schoolId}": { "schema": "School", "description": "School branches" },
+    "/students/{studentId}": { "schema": "Student", "description": "Student records" },
+    "/teachers/{teacherId}": { "schema": "Teacher", "description": "Teacher records" },
+    "/classes/{classId}": { "schema": "Class", "description": "Academic classes" },
+    "/attendance/{attendanceId}": { "schema": "Attendance", "description": "Attendance logs" },
+    "/fees/{feeId}": { "schema": "Fee", "description": "Financial records" },
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "System notifications" }
+  }
+}
