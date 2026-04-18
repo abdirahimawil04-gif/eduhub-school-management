@@ -69,14 +69,22 @@ export default function LandingPage() {
             />
           </div>
 
-          <div className="pt-8">
+          <div className="pt-8 flex gap-4 justify-center">
             <Button 
               onClick={() => setIsLogin(false)} 
               size="lg" 
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-indigo-200 transition-all gap-2"
             >
               <LogIn className="w-5 h-5" />
-              Sign in with Email
+              Sign Up
+            </Button>
+            <Button 
+              onClick={() => setIsLogin(true)} 
+              size="lg" 
+              variant="outline"
+              className="px-8 py-6 text-lg rounded-full"
+            >
+              Log In
             </Button>
           </div>
         </div>
