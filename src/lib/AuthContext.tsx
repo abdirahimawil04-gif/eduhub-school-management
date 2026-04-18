@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from './firebase';
 
@@ -24,7 +24,8 @@ interface AuthContextType {
   profile: UserProfile | null;
   school: School | null;
   loading: boolean;
-  login: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -118,20 +119,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
+  const login = async (email: string, password: string) => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
       console.error('Login failed:', error);
-      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
-        alert('Please allow the popup and try again, or check your browser popup blocker.');
-      } else if (error?.code === 'auth/unauthorized-domain') {
-        alert('Domain not authorized. Trying redirect...');
-        await auth.signInWithRedirect(provider);
+      if (error?.code === 'auth/invalid-email') {
+        throw new Error('Invalid email address');
+      } else if (error?.code === 'auth/user-not-found' || error?.code === 'auth/wrong-password') {
+        throw new Error('Invalid email or password');
+      } else if (error?.code === 'auth/invalid-credential') {
+        throw new Error('Invalid email or password');
       } else {
-        alert('Login error: ' + error?.message);
+        throw new Error(error?.message || 'Login failed');
+      }
+    }
+  };
+
+  const signup = async (email: string, password: string, name: string) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, { displayName: name });
+      // Create profile in Firestore
+      const isSuperAdmin = email === 'abdirahimawil04@gmail.com' || email === 'rammadan1213@gmail.com';
+      const newProfile: UserProfile = {
+        uid: result.user.uid,
+        email: email,
+        displayName: name,
+        role: isSuperAdmin ? 'super_admin' : 'student',
+        schoolId: 'default_school'
+      };
+      await setDoc(doc(db, 'users', result.user.uid), newProfile);
+      setProfile(newProfile);
+    } catch (error: any) {
+      console.error('Signup failed:', error);
+      if (error?.code === 'auth/email-already-in-use') {
+        throw new Error('Email already registered');
+      } else if (error?.code === 'auth/weak-password') {
+        throw new Error('Password should be at least 6 characters');
+      } else {
+        throw new Error(error?.message || 'Signup failed');
       }
     }
   };
@@ -145,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, school, loading, login, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, school, loading, login, signup, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
