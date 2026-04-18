@@ -87,11 +87,9 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <AppContent />
-        <Toaster position="top-right" />
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <AppContent />
+      <Toaster position="top-right" />
+    </AuthProvider>
   );
 }
