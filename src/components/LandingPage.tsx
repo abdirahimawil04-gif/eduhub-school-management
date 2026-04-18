@@ -18,13 +18,19 @@ export default function LandingPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    console.log('Submitting:', isLogin ? 'login' : 'signup', email);
     try {
       if (isLogin) {
+        console.log('Calling login...');
         await login(email, password);
+        console.log('Login successful!');
       } else {
+        console.log('Calling signup...');
         await signup(email, password, name || 'User');
+        console.log('Signup successful!');
       }
     } catch (err: any) {
+      console.error('Error:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);

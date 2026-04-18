@@ -87,8 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
+    console.log('login function called with:', email);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      console.log(' Calling signInWithEmailAndPassword...');
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login result:', result);
     } catch (error: any) {
       console.error('Login failed:', error);
       if (error?.code === 'auth/invalid-email') {
