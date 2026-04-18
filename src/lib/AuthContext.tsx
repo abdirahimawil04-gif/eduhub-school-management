@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db, handleFirestoreError, OperationType } from './firebase';
+import { auth } from './firebase';
 
 interface UserProfile {
   uid: string;
@@ -38,95 +37,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfileAndSchool = async (uid: string) => {
-    const profileRef = doc(db, 'users', uid);
-    try {
-      const profileSnap = await getDoc(profileRef);
-      if (profileSnap.exists()) {
-        const profileData = profileSnap.data() as UserProfile;
-        setProfile(profileData);
-
-        if (profileData.schoolId) {
-          const schoolRef = doc(db, 'schools', profileData.schoolId);
-          const schoolSnap = await getDoc(schoolRef);
-          if (schoolSnap.exists()) {
-            setSchool({ id: schoolSnap.id, ...schoolSnap.data() } as School);
-          } else if (profileData.schoolId === 'default_school') {
-            // Create default school if it doesn't exist
-            const defaultSchool = {
-              name: 'EduHub Academy',
-              address: 'Main Campus, Education City',
-              contactEmail: 'info@eduhub.com'
-            };
-            await setDoc(schoolRef, defaultSchool);
-            setSchool({ id: 'default_school', ...defaultSchool });
-          }
-        }
-      } else {
-        // Create default profile for new users
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const isSuperAdmin = currentUser.email === 'abdirahimawil04@gmail.com' || currentUser.email === 'rammadan1213@gmail.com';
-          const newProfile: UserProfile = {
-            uid: currentUser.uid,
-            email: currentUser.email || '',
-            displayName: currentUser.displayName || 'User',
-            role: isSuperAdmin ? 'super_admin' : 'student',
-            schoolId: 'default_school'
-          };
-          await setDoc(profileRef, newProfile);
-          setProfile(newProfile);
-          
-          // Ensure default school exists
-          const schoolRef = doc(db, 'schools', 'default_school');
-          const schoolSnap = await getDoc(schoolRef);
-          if (!schoolSnap.exists()) {
-            const defaultSchool = {
-              name: 'EduHub Academy',
-              address: 'Main Campus, Education City',
-              contactEmail: 'info@eduhub.com'
-            };
-            await setDoc(schoolRef, defaultSchool);
-            setSchool({ id: 'default_school', ...defaultSchool });
-          } else {
-            setSchool({ id: 'default_school', ...schoolSnap.data() } as School);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Create default profile if not exists
-      const userEmail = auth.currentUser?.email || '';
-      const isSuperAdmin = userEmail === 'abdirahimawil04@gmail.com' || userEmail === 'rammadan1213@gmail.com';
-      const newProfile: UserProfile = {
-        uid,
-        email: userEmail,
-        displayName: auth.currentUser?.displayName || 'User',
-        role: isSuperAdmin ? 'super_admin' : 'student',
-        schoolId: 'default_school'
-      };
-      setProfile(newProfile);
-      setSchool({ id: 'default_school', name: 'EduHub Academy', address: 'Main Campus', contactEmail: 'info@eduhub.com' });
-    }
+  const isSuperAdmin = (email: string) => {
+    return email === 'abdirahimawil04@gmail.com' || email === 'rammadan1213@gmail.com';
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      try {
-        if (user) {
-          await fetchProfileAndSchool(user.uid);
-        } else {
-          setProfile(null);
-          setSchool(null);
-        }
-      } catch (error) {
-        console.error('Auth error:', error);
+    console.log('AuthProvider: setting up listener');
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('AuthProvider: user changed', firebaseUser?.email);
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const email = firebaseUser.email || '';
+        const newProfile: UserProfile = {
+          uid: firebaseUser.uid,
+          email: email,
+          displayName: firebaseUser.displayName || 'User',
+          role: isSuperAdmin(email) ? 'super_admin' : 'student',
+          schoolId: 'default_school'
+        };
+        setProfile(newProfile);
+        setSchool({ 
+          id: 'default_school', 
+          name: 'EduHub Academy', 
+          address: 'Main Campus', 
+          contactEmail: 'info@eduhub.com' 
+        });
+      } else {
+        setUser(null);
         setProfile(null);
         setSchool(null);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -134,7 +75,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfileAndSchool(user.uid);
+      const email = user.email || '';
+      setProfile({
+        uid: user.uid,
+        email: email,
+        displayName: user.displayName || 'User',
+        role: isSuperAdmin(email) ? 'super_admin' : 'student',
+        schoolId: 'default_school'
+      });
     }
   };
 
@@ -159,16 +107,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
-      // Create profile in Firestore
-      const isSuperAdmin = email === 'abdirahimawil04@gmail.com' || email === 'rammadan1213@gmail.com';
       const newProfile: UserProfile = {
         uid: result.user.uid,
         email: email,
         displayName: name,
-        role: isSuperAdmin ? 'super_admin' : 'student',
+        role: isSuperAdmin(email) ? 'super_admin' : 'student',
         schoolId: 'default_school'
       };
-      await setDoc(doc(db, 'users', result.user.uid), newProfile);
       setProfile(newProfile);
     } catch (error: any) {
       console.error('Signup failed:', error);
