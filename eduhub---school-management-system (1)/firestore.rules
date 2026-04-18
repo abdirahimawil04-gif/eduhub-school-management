@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Fields: uid, email, displayName, role, schoolId, createdAt
+    //
+    // Collection: schools
+    // Fields: id, name, address, contactEmail, createdAt
+    //
+    // Collection: students
+    // Fields: id, userId, schoolId, classId, admissionNumber, status, parentName, parentContact
+    //
+    // Collection: teachers
+    // Fields: id, userId, schoolId, specialization
+    //
+    // Collection: classes
+    // Fields: id, name, schoolId, teacherId
+    //
+    // Collection: attendance
+    // Fields: id, studentId, classId, date, status, recordedBy
+    //
+    // Collection: fees
+    // Fields: id, studentId, amount, type, status, dueDate
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        (getUserData().role == 'super_admin' || 
+         (request.auth.token.email == "rammadan1213@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isSchoolAdmin(schoolId) {
+      return isAuthenticated() && (getUserData().role == 'school_admin' && getUserData().schoolId == schoolId);
+    }
+
+    function isTeacher(schoolId) {
+      return isAuthenticated() && (getUserData().role == 'teacher' && getUserData().schoolId == schoolId);
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.role in ['super_admin', 'school_admin', 'teacher', 'accountant', 'student'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isSuperAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isSuperAdmin());
+    }
+
+    match /schools/{schoolId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    match /students/{studentId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+
+    match /teachers/{teacherId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isSuperAdmin();
+    }
+
+    match /classes/{classId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+
+    match /attendance/{attendanceId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId) || isTeacher(request.resource.data.schoolId));
+    }
+
+    match /fees/{feeId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId) || getUserData().role == 'accountant');
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId || resource.data.targetRole == 'all' || resource.data.targetRole == getUserData().role);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+  }
+}
