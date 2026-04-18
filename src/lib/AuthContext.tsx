@@ -37,6 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log('AuthProvider initializing...');
+  }, []);
 
   const fetchProfileAndSchool = async (uid: string) => {
     const profileRef = doc(db, 'users', uid);
@@ -101,13 +106,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
-      if (user) {
-        await fetchProfileAndSchool(user.uid);
-      } else {
+      try {
+        if (user) {
+          await fetchProfileAndSchool(user.uid);
+        } else {
+          setProfile(null);
+          setSchool(null);
+        }
+      } catch (error) {
+        console.error('Auth error:', error);
         setProfile(null);
         setSchool(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
