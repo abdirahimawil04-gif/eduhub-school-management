@@ -37,11 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initError, setInitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    console.log('AuthProvider initializing...');
-  }, []);
 
   const fetchProfileAndSchool = async (uid: string) => {
     const profileRef = doc(db, 'users', uid);
@@ -99,7 +94,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.GET, `users/${uid}`);
+      console.error('Error fetching profile:', error);
+      // Create default profile if not exists
+      const userEmail = auth.currentUser?.email || '';
+      const isSuperAdmin = userEmail === 'abdirahimawil04@gmail.com' || userEmail === 'rammadan1213@gmail.com';
+      const newProfile: UserProfile = {
+        uid,
+        email: userEmail,
+        displayName: auth.currentUser?.displayName || 'User',
+        role: isSuperAdmin ? 'super_admin' : 'student',
+        schoolId: 'default_school'
+      };
+      setProfile(newProfile);
+      setSchool({ id: 'default_school', name: 'EduHub Academy', address: 'Main Campus', contactEmail: 'info@eduhub.com' });
     }
   };
 
