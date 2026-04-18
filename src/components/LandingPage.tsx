@@ -7,6 +7,7 @@ import { GraduationCap, LogIn, ShieldCheck } from 'lucide-react';
 
 export default function LandingPage() {
   const { login, signup } = useAuth();
+  const [showForm, setShowForm] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,7 +40,66 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      {isLogin ? (
+      {showForm ? (
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <GraduationCap className="w-6 h-6 text-indigo-600" />
+            </div>
+            <CardTitle className="text-2xl">{isLogin ? 'Log In' : 'Sign Up'}</CardTitle>
+            <CardDescription>
+              {isLogin ? 'Enter your credentials' : 'Create your account'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <Input
+                  type="text"
+                  placeholder="Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              )}
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              {error && (
+                <p className="text-red-500 text-sm">{error}</p>
+              )}
+              <Button 
+                type="submit" 
+                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                disabled={loading}
+              >
+                {loading ? 'Please wait...' : isLogin ? 'Log In' : 'Sign Up'}
+              </Button>
+            </form>
+            <p className="text-center mt-4 text-sm text-slate-600">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button 
+                type="button"
+                onClick={() => setIsLogin(!isLogin)} 
+                className="text-indigo-600 hover:underline"
+              >
+                {isLogin ? 'Sign Up' : 'Log In'}
+              </button>
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
         <div className="max-w-4xl w-full text-center space-y-8">
           <div className="flex justify-center">
             <div className="p-4 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-200">
@@ -77,7 +137,7 @@ export default function LandingPage() {
 
           <div className="pt-8 flex gap-4 justify-center">
             <Button 
-              onClick={() => setIsLogin(false)} 
+              onClick={() => { setShowForm(true); setIsLogin(false); }} 
               size="lg" 
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-indigo-200 transition-all gap-2"
             >
@@ -85,7 +145,7 @@ export default function LandingPage() {
               Sign Up
             </Button>
             <Button 
-              onClick={() => setIsLogin(true)} 
+              onClick={() => { setShowForm(true); setIsLogin(true); }} 
               size="lg" 
               variant="outline"
               className="px-8 py-6 text-lg rounded-full"
@@ -94,7 +154,10 @@ export default function LandingPage() {
             </Button>
           </div>
         </div>
-      ) : (
+      )}
+    </div>
+  );
+}{
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
