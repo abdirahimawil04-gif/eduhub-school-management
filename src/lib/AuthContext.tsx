@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(newProfile);
         setSchool({ 
           id: 'default_school', 
-          name: 'EduHub Academy', 
+          name: 'My School', 
           address: 'Main Campus', 
           contactEmail: 'info@eduhub.com' 
         });

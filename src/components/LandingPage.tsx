@@ -43,7 +43,7 @@ export default function LandingPage() {
           
           <div className="space-y-4">
             <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">
-              EduHub <span className="text-indigo-600">SMS</span>
+              School <span className="text-indigo-600">Management</span>
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
               The centralized school management system for modern institutions. 

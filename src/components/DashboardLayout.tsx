@@ -81,7 +81,7 @@ export default function DashboardLayout({ children, activeTab, setActiveTab }: {
                   <GraduationCap size={24} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-xl tracking-tight text-slate-900">EduHub</h2>
+                  <h2 className="font-bold text-xl tracking-tight text-slate-900">SMS</h2>
                   <p className="text-[10px] uppercase tracking-widest font-bold text-indigo-600 opacity-80">Management System</p>
                 </div>
                 <button 
@@ -163,7 +163,7 @@ export default function DashboardLayout({ children, activeTab, setActiveTab }: {
             )}
             <div>
               <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <span className="text-indigo-600">{school?.name || 'EduHub Academy'}</span>
+                <span className="text-indigo-600">{school?.name || 'SMS Academy'}</span>
                 <span className="text-slate-300 font-light">/</span>
                 <span className="capitalize text-slate-500 font-medium">{activeTab.replace('-', ' ')}</span>
               </h1>
