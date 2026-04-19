@@ -1,30 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // ===============================================================
-    // Assumed Data Model
+    // Multi-Branch Data Model (from SPEC.md)
     // ===============================================================
-    // Collection: users
-    // Fields: uid, email, displayName, role, schoolId, createdAt
-    //
-    // Collection: schools
-    // Fields: id, name, address, contactEmail, createdAt
-    //
-    // Collection: students
-    // Fields: id, userId, schoolId, classId, admissionNumber, status, parentName, parentContact
-    //
-    // Collection: teachers
-    // Fields: id, userId, schoolId, specialization
-    //
-    // Collection: classes
-    // Fields: id, name, schoolId, teacherId
-    //
-    // Collection: attendance
-    // Fields: id, studentId, classId, date, status, recordedBy
-    //
-    // Collection: fees
-    // Fields: id, studentId, amount, type, status, dueDate
+    // Collection: organizations
+    // Collection: branches (belongs to organization)
+    // Collection: users (belongs to branch, role-based)
+    // Collection: students, teachers, classes, subjects
+    // Collection: exams, examResults, attendance
+    // Collection: feeStructures, invoices, payments
     // ===============================================================
 
     // ===============================================================
@@ -104,6 +90,36 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId || resource.data.targetRole == 'all' || resource.data.targetRole == getUserData().role);
       allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+
+    match /subjects/{subjectId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+
+    match /exams/{examId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+
+    match /examResults/{resultId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId) || isTeacher(request.resource.data.schoolId));
+    }
+
+    match /feeStructures/{feeStructureId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId || resource.data.studentId == getUserData().studentId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId) || getUserData().role == 'accountant');
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || getUserData().schoolId == resource.data.schoolId);
+      allow write: if isAuthenticated() && (isSuperAdmin() || isSchoolAdmin(request.resource.data.schoolId) || getUserData().role == 'accountant');
     }
   }
 }
